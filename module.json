@@ -1,0 +1,11 @@
+{
+    "name": "floating-combat-toolbox",
+    "title": "Floating Combat Toolbox",
+    "description": "",
+    "author": "enso#0361",
+    "version": "1.0.0",
+    "minimumCoreVersion": "0.8.8",
+    "esmodules": [
+        "scripts/floating-combat-toolbox.js"
+    ]
+}
