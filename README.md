@@ -1,2 +1,51 @@
-# floating-combat-toolbox
- FVTT module for creating and managing floating combats.
+![All Downloads](https://img.shields.io/github/downloads/jessev14/floating-combat-toolbox/total?style=for-the-badge)
+
+[![Forge Installs](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2Ffloating-combat-toolbox&colorB=4aa94a)](https://forge-vtt.com/bazaar#package=floating-combat-toolbox)
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/jessev14)
+
+
+# Floating Combat Toolbox
+
+Commissioned by SoundSherpa.
+
+Floating Combat Toolbox gives users an accessible way to create and manage "floating" combats.
+
+Floating combats can be viewed from any scene and can contain combatatants from different scenes. This makes large-scale, multi-scene encounters much more feasible.
+
+# Usage
+
+Floating combats can be created using the new dialog window that appears when clicking the + icon on the combat tracker.
+
+For GM users, the encounter header for floating combats will be displayed in yellow.
+
+Combatants can be added to floating combats in the same way as normal combats.
+
+Hovering over combatants in the combat tracker will display their scene. A module setting can also be enabled to display the scene next to the combatant's name.
+
+Additional module settings can be enabled to:
+
+### Switch Scene on Turn Change
+This setting can be set to only change the scene for GM users or for all users.
+
+### Switch Scene on Combatant Click
+This feature only works for the GM user that clicks on the combatant.
+However, GM users can use a new context menu option to pull **all** users to the selected combatant's scene.
+
+### Make Combats Floating by Default
+This will skip the new encounter dialog window, automatically making new combats floating. This also applies when creating a combat by toggling combat on a token.
+
+ 
+
+# Incompatibilities
+* Next Up (partial)
+* Combat Ready
+
+
+# Tehcnical Notes
+Floating combats are a not a new implementaiont
+
+
+# Future Implementations
+* Combat Ready compatibility.
+* Option to create a floating combat from other, pre-existing combats.
