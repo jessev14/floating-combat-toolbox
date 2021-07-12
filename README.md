@@ -11,7 +11,7 @@ Commissioned by SoundSherpa.
 
 Floating Combat Toolbox gives users an accessible way to create and manage "floating" combats.
 
-Floating combats can be viewed from any scene and can contain combatatants from different scenes. This makes large-scale, multi-scene encounters much more feasible.
+Floating combats can be viewed from any scene and can contain combatants from different scenes. This makes large-scale, multi-scene encounters much more feasible.
 
 <img src="/img/demo.gif" width=1000>
 
