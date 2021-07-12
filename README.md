@@ -13,6 +13,8 @@ Floating Combat Toolbox gives users an accessible way to create and manage "floa
 
 Floating combats can be viewed from any scene and can contain combatatants from different scenes. This makes large-scale, multi-scene encounters much more feasible.
 
+<img src="/img/demo.gif" width=1000>
+
 # Usage
 
 Floating combats can be created using the new dialog window that appears when clicking the + icon on the combat tracker.
