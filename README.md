@@ -47,7 +47,7 @@ The following modules are currently not compatible with floating combats, though
 
 
 # Tehcnical Notes
-Floating combats are a not a novel feature. They can be created without this module by creating a combat with `scene: null` or updating an existing combat's scene to be `null`.
+Floating combats are a not a novel feature. They can be created entirely without this module by creating a combat with `scene: null` or updating an existing combat's scene to be `null`.
 
 
 This module implements a user-friendly interface for creating and managing floating combats. It also implements additional combat/combatant/token handling to offer a smoother combat flow while using a floating combat.
