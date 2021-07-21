@@ -41,7 +41,6 @@ This will skip the new encounter dialog window, automatically making new combats
 # Incompatibilities
 The following modules are currently not compatible with floating combats, though even with this module enabled, normal combats can be used and should function as expected.
 
-* Multilevel Tokens
 * Next Up (partial)
 * Combat Ready
 
@@ -54,6 +53,7 @@ This module implements a user-friendly interface for creating and managing float
 
 
 # Future Implementations
-* Multilevel Tokens comaptibility - Top Priority
+* ~~Multilevel Tokens comaptibility~~ Implemented in v1.1.0.
+* Stairways compatibility.
 * Combat Ready compatibility.
-* Option to create a floating combat from other, pre-existing combats.
+* Option to generate a floating combat from other, pre-existing combats.
