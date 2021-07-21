@@ -1,24 +1,5 @@
-/**
- * IMP2 FORK:
- * prevent combatant deletion via any method other than combat deletion, combatant context menu, or token deletion
- * when a token is created, check for combatantData flag (only present if token was created via MLT teleport)
- * if flag present, update releveant combatant and combatantData flag on token
- * 
- * pros: 
- *  maintains combat turn
- *  maintains duration for time/duration based modules
- * 
- * cons:
- *  cannot delete combatant with HUD toggle (maybe)
- * 
- * 
- * 
- * when current combatant changes scenes, need to rewind back to their turn
- *      this implementation (instead of preventing combatant deletion) may be wholly incompatible with duration/time-based modules
- */
-
 import { libWrapper } from "../lib/shim.js";
-import { getCombatfromCombatantID, getTokenFromTokenID } from "./helpers.js"
+import { getTokenFromTokenID } from "./helpers.js";
 
 Hooks.once("init", () => {
     console.log("floating-combat-toolbox | initializing");
@@ -51,7 +32,7 @@ Hooks.once("init", () => {
         name: "Display Combatant Scene Name", // LOCALIZE
         hint: "",
         type: Boolean,
-        default: false,
+        default: true,
         scope: "world",
         config: true,
         onChange: () => ui.combat.render()
@@ -69,20 +50,23 @@ Hooks.once("init", () => {
 
 Hooks.once("setup", () => {
     // Patch CombatTracker#_onCombatantMouseDown to switch scene to clicked combatant
-    libWrapper.register("floating-combat-toolbox", "CombatTracker.prototype._onCombatantMouseDown", new_onCombatantMouseDown, "MIXED");
+    libWrapper.register("floating-combat-toolbox", "CombatTracker.prototype._onCombatantMouseDown", new_onCombatantMouseDown, "OVERRIDE");
 
     // Patch CombatTracker#_onCombatCreate to query type of combat to create
     libWrapper.register("floating-combat-toolbox", "CombatTracker.prototype._onCombatCreate", new_onCombatCreate, "MIXED");
 
     // Patch Combatant#token#get to use sceneID flag data to get token
-    libWrapper.register("floating-combat-toolbox", "Combatant.prototype.token", new_getToken, "WRAPPER");
+    libWrapper.register("floating-combat-toolbox", "Combatant.prototype.token", new_getToken, "MIXED");
+
+    // Patch MultilevelTokens#_execute to avoid deleting combatants
+    if (game.modules.get("multilevel-tokens")?.active) libWrapper.register("floating-combat-toolbox", "MultilevelTokens.prototype._execute", new_MLTexecute, "WRAPPER");
 });
 
 
 // Add combatant context menu option to allow GM users to pull all users to a combatant's scene
 Hooks.on("getCombatTrackerEntryContext", (html, contextOptions) => {
     const pullToSceneOption = {
-        name: "Pull All Users to Scene",
+        name: "Pull All Users to Scene", // LOCALIZE
         icon: `<i class="fas fa-directions"></i>`,
         condition: game.user.isGM,
         callback: li => {
@@ -100,20 +84,21 @@ Hooks.on("getCombatTrackerEntryContext", (html, contextOptions) => {
 // As a combatant is created, store original scene ID in a flag
 Hooks.on("preCreateCombatant", (combatant, data, options, userID) => {
     // If combatant's token has MLT flags, it's most likely a clone so do not create a combatant
-    const token = getTokenFromTokenID(data.tokenId);
+    const token = getTokenFromTokenID(data.tokenId, data.actorId);
     if (token.data.flags["multilevel-tokens"]) return false;
 
-    if (combatant.data.scene) return;
+    if (combatant.parent.data.scene) return;
     const sceneID = token.parent.data._id;
     combatant.data.update({ "flags.floating-combat-toolbox.sceneID": sceneID });
 });
 
 // After a combatant is created, store combatant data in a flag on the combatant's token
 Hooks.on('createCombatant', (combatant, data, options, userID) => {
-    if (combatant.data.scene) return;
+    if (combatant.parent.data.scene) return;
 
     const tokenID = combatant.data.tokenId;
-    const token = getTokenFromTokenID(tokenID);
+    const tokenActorID = combatant.data.actorId;
+    const token = getTokenFromTokenID(tokenID, tokenActorID);
     if (token) token.setFlag("floating-combat-toolbox", "combatantData", combatant.data);
 });
 
@@ -126,8 +111,7 @@ Hooks.on("updateCombatant", (combatant, diff, options, userID) => {
 });
 
 // When a token is created, if it already has combatantData flag, then the token was most likely created as part of a MLT teleport
-// Recreate the combatant with updated tokenId
-Hooks.on("createToken", (tokenDoc, data, options, userID) => {
+Hooks.on("createToken", async (tokenDoc, data, options, userID) => {
     if (!game.combat) return;
 
     let combatantData = tokenDoc.data.flags["floating-combat-toolbox"]?.combatantData;
@@ -136,7 +120,15 @@ Hooks.on("createToken", (tokenDoc, data, options, userID) => {
     combatantData = mergeObject(combatantData, {
         tokenId: tokenDoc.data._id
     });
-    Combatant.create(combatantData, { parent: game.combat });
+
+    // Update the token combatantData flag
+    await tokenDoc.data.update({ "flags.floating-combat-toolbox.combatantData": combatantData });
+
+    // Update combatant sceneID flag and tokenId data
+    await game.combat.combatants.get(combatantData._id).update({
+        "flags.floating-combat-toolbox.sceneID": tokenDoc.parent.data._id,
+        tokenId: tokenDoc.data._id
+    });
 });
 
 // Have to manually delete combatant when token is deleted because CombatEncounters#_onDeleteToken looks at combat scene (null for floating combats)
@@ -186,23 +178,33 @@ Hooks.on("renderCombatTracker", (combatTracker, html, data) => {
 });
 
 
-async function new_onCombatantMouseDown(wrapped, ...args) {
-    if (!game.settings.get("floating-combat-toolbox", "clickCombatantSceneSwitch")) return wrapped(...args);
-
+async function new_onCombatantMouseDown(...args) {
+    args[0].preventDefault();
     const event = args[0];
+
     const li = event.currentTarget;
     const combatant = this.viewed.combatants.get(li.dataset.combatantId);
-    const combatantSceneID = combatant.getFlag("floating-combat-toolbox", "sceneID");
+    const token = combatant.token;
+    if ((token === null) || !combatant.actor?.testUserPermission(game.user, "OBSERVED")) return;
+    const now = Date.now();
 
-    if (combatantSceneID === game.scenes.viewed.id && combatant.token) return wrapped(...args);
-    if (!combatant.actor?.testUserPermission(game.user, "OBSERVED")) return wrapped(...args);
+    // Handle double-left click to open sheet
+    const dt = now - this._clickTime;
+    this._clickTime = now;
+    if (dt <= 250) return token?.actor?.sheet.render(true);
 
-    await game.scenes.get(combatantSceneID).view();
-    const token = game.scenes.get(combatantSceneID).tokens.get(combatant.data.tokenId);
+    // If the Token does not exist in this scene
+    // TODO: This is a temporary workaround until we persist sceneId as part of the Combatant data model
+    //if ( token === undefined ) {
+    if (combatant.getFlag("floating-combat-toolbox", "sceneID") !== game.scenes.viewed.data._id) {
+        await game.scenes.get(combatant.getFlag("floating-combat-toolbox", "sceneID")).view();
+    }
 
-    if (token.object) {
-        token.object.control({ releaseOthers: true });
-        return canvas.animatePan({ x: token.data.x, y: token.data.y });
+    // Control and pan to Token object
+    const tkn = game.scenes.viewed.tokens.get(token.data._id);
+    if (tkn.object) {
+        tkn.object.control({ releaseOthers: true });
+        return canvas.animatePan({ x: tkn.data.x, y: tkn.data.y });
     }
 }
 
@@ -231,7 +233,7 @@ async function new_onCombatCreate(wrapped, ...args) {
                         callback: () => resolve(true)
                     },
                     floating: {
-                        label: "Floating (multi-scene)",
+                        label: "Floating (multi-scene)", // LOCALIZE
                         callback: () => resolve(false)
                     }
                 }
@@ -247,13 +249,28 @@ async function new_onCombatCreate(wrapped, ...args) {
 }
 
 function new_getToken(wrapped, ...args) {
-    let token = wrapped(...args);
-    if (token) return token;
-    
+    const token = wrapped(...args);
+
     const sceneID = this.data.flags["floating-combat-toolbox"]?.sceneID;
     if (!sceneID) return token;
 
     const scene = game.scenes.get(sceneID);
     this._token = scene.tokens.get(this.data.tokenId);
     return this._token;
+}
+
+function new_MLTexecute(wrapped, ...args) {
+    const options = {isUndo: true};
+    options[MLT.REPLICATED_UPDATE] = true;
+
+    const requestBatch = args[0];
+    for (const [sceneId, data] of Object.entries(requestBatch._scenes)) {
+        const scene = game.scenes.get(sceneId);
+        if (data.delete.length) {
+            scene.deleteEmbeddedDocuments(Token.embeddedName, data.delete, options);
+            data.delete = [];
+        }
+    }
+
+    return wrapped(...args);
 }
