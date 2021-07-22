@@ -1,6 +1,7 @@
 import { libWrapper } from "../lib/shim.js";
 import { getTokenFromTokenID } from "./helpers.js";
 
+
 Hooks.once("init", () => {
     console.log("floating-combat-toolbox | initializing");
 
@@ -176,6 +177,24 @@ Hooks.on("renderCombatTracker", (combatTracker, html, data) => {
     });
 
 });
+
+// For Stairways module, hook onto PreStairwayTeleport and and prevent combatant deletion
+if (game.modules.get("stairways")?.active) {
+    Hooks.on("PreStairwayTeleport", data => {
+        const { selectedTokenIds, sourceSceneId } = data;
+        for (const tokenID of selectedTokenIds) {
+            const token = game.scenes.get(sourceSceneId).tokens.get(tokenID);
+            if (!token.data.flags["floating-combat-toolbox"].combatantData) continue;
+
+            const preDeleteHook = Hooks.on("preDeleteCombatant", (combatantDoc, options, userID) => {
+                if (combatantDoc.data.tokenId !== tokenID) return;
+
+                Hooks.off("preDeleteCombatant", preDeleteHook);
+                return false;
+            });
+        }
+    });
+}
 
 
 async function new_onCombatantMouseDown(...args) {
