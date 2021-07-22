@@ -61,6 +61,9 @@ Hooks.once("setup", () => {
 
     // Patch MultilevelTokens#_execute to avoid deleting combatants
     if (game.modules.get("multilevel-tokens")?.active) libWrapper.register("floating-combat-toolbox", "MultilevelTokens.prototype._execute", new_MLTexecute, "WRAPPER");
+
+    // Stairways compatibility
+    if (game.modules.get("stairways")?.active) stairwaysHook();
 });
 
 
@@ -179,7 +182,7 @@ Hooks.on("renderCombatTracker", (combatTracker, html, data) => {
 });
 
 // For Stairways module, hook onto PreStairwayTeleport and and prevent combatant deletion
-if (game.modules.get("stairways")?.active) {
+function stairwaysHook() {
     Hooks.on("PreStairwayTeleport", data => {
         const { selectedTokenIds, sourceSceneId } = data;
         for (const tokenID of selectedTokenIds) {
@@ -195,7 +198,7 @@ if (game.modules.get("stairways")?.active) {
         }
     });
 }
-
+    
 
 async function new_onCombatantMouseDown(...args) {
     args[0].preventDefault();
