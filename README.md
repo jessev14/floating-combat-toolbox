@@ -23,7 +23,7 @@ For GM users, the encounter header for floating combats will be displayed in yel
 
 Combatants can be added to floating combats in the same way as normal combats.
 
-Hovering over combatants in the combat tracker will display their scene. A module setting can also be enabled to display the scene next to the combatant's name.
+The combatant's scene is displayed next to each combatant's name. This can be disabled the module settings. Hovering over combatants in the combat tracker will still display their scene.
 
 Additional module settings can be enabled to:
 
@@ -53,7 +53,7 @@ This module implements a user-friendly interface for creating and managing float
 
 
 # Future Implementations
-* ~~Multilevel Tokens comaptibility~~ Implemented in v1.1.0.
-* Stairways compatibility.
+* ~~Multilevel Tokens comaptibility.~~ Implemented in v1.1.0.
+* ~~Stairways compatibility.~~ Implemented in v1.2.0.
 * Combat Ready compatibility.
 * Option to generate a floating combat from other, pre-existing combats.
