@@ -108,7 +108,7 @@ Hooks.on('createCombatant', (combatant, data, options, userID) => {
 
 // When a combatant is updated, also update combatant data in token flags
 Hooks.on("updateCombatant", (combatant, diff, options, userID) => {
-    if (!combatant.data.flags["floating-combat-toolbox"].sceneID) return;
+    if (!combatant.data.flags["floating-combat-toolbox"]?.sceneID) return;
 
     const token = game.scenes.get(combatant.getFlag("floating-combat-toolbox", "sceneID")).tokens.get(combatant.data.tokenId);
     if (token) token.setFlag("floating-combat-toolbox", "combatantData", combatant.data);
