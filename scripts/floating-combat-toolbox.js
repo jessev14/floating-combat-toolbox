@@ -171,7 +171,7 @@ Hooks.on("renderCombatTracker", (combatTracker, html, data) => {
         const combatantID = this.dataset.combatantId;
         const combatant = game.combat.combatants.get(combatantID);
         const combatantSceneID = combatant.getFlag("floating-combat-toolbox", "sceneID");
-        const sceneName = game.scenes.get(combatantSceneID).name;
+        const sceneName = game.scenes.get(combatantSceneID)?.name||"(unknown)";
         $(this).prop("title", sceneName);
 
         if (game.settings.get("floating-combat-toolbox", "displaySceneName")) {
