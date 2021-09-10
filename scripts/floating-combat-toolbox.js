@@ -172,7 +172,7 @@ Hooks.on("renderCombatTracker", (combatTracker, html, data) => {
         const combatant = game.combat.combatants.get(combatantID);
         const combatantSceneID = combatant.getFlag("floating-combat-toolbox", "sceneID");
         const sceneName = game.scenes.get(combatantSceneID).name;
-        $(this).prop("title", sceneName);
+        if (sceneName) $(this).prop("title", sceneName);
 
         if (game.settings.get("floating-combat-toolbox", "displaySceneName")) {
             $(this).find("h4").contents().filter(function () { return this.nodeType === 3; })[0].nodeValue += ` | ${sceneName}`;
