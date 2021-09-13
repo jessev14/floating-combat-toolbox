@@ -97,7 +97,7 @@ Hooks.on("preCreateCombatant", (combatant, data, options, userID) => {
 });
 
 // After a combatant is created, store combatant data in a flag on the combatant's token
-Hooks.on('createCombatant', (combatant, data, options, userID) => {
+Hooks.on("createCombatant", (combatant, data, options, userID) => {
     if (combatant.parent.data.scene) return;
 
     const tokenID = combatant.data.tokenId;
@@ -171,7 +171,7 @@ Hooks.on("renderCombatTracker", (combatTracker, html, data) => {
         const combatantID = this.dataset.combatantId;
         const combatant = game.combat.combatants.get(combatantID);
         const combatantSceneID = combatant.getFlag("floating-combat-toolbox", "sceneID");
-        const sceneName = game.scenes.get(combatantSceneID).name;
+        const sceneName = game.scenes.get(combatantSceneID)?.name;
         if (sceneName) $(this).prop("title", sceneName);
 
         if (game.settings.get("floating-combat-toolbox", "displaySceneName")) {
@@ -218,12 +218,14 @@ async function new_onCombatantMouseDown(...args) {
     // If the Token does not exist in this scene
     // TODO: This is a temporary workaround until we persist sceneId as part of the Combatant data model
     //if ( token === undefined ) {
-    if (combatant.getFlag("floating-combat-toolbox", "sceneID") !== game.scenes.viewed.data._id) {
-        await game.scenes.get(combatant.getFlag("floating-combat-toolbox", "sceneID")).view();
+    const scene = game.scenes.get(combatant.getFlag("floating-combat-toolbox", "sceneID"));
+    if (scene?.id !== game.scenes.viewed.data._id) {
+        if (scene && game.settings.get("floating-combat-toolbox", "clickCombatantSceneSwitch")) await scene.view();
     }
 
     // Control and pan to Token object
     const tkn = game.scenes.viewed.tokens.get(token.data._id);
+    if (!tkn) return;
     if (tkn.object) {
         tkn.object.control({ releaseOthers: true });
         return canvas.animatePan({ x: tkn.data.x, y: tkn.data.y });
