@@ -98,6 +98,8 @@ Hooks.on("preCreateCombatant", (combatant, data, options, userID) => {
 
 // After a combatant is created, store combatant data in a flag on the combatant's token
 Hooks.on("createCombatant", (combatant, data, options, userID) => {
+    if (game.user.id !== game.users.find(u => u.isGM && u.active).id) return;
+    
     if (combatant.parent.data.scene) return;
 
     const tokenID = combatant.data.tokenId;
@@ -108,6 +110,7 @@ Hooks.on("createCombatant", (combatant, data, options, userID) => {
 
 // When a combatant is updated, also update combatant data in token flags
 Hooks.on("updateCombatant", (combatant, diff, options, userID) => {
+    if (game.user.id !== game.users.find(u => u.isGM && u.active).id) return;
     if (!combatant.data.flags["floating-combat-toolbox"]?.sceneID) return;
 
     const token = game.scenes.get(combatant.getFlag("floating-combat-toolbox", "sceneID")).tokens.get(combatant.data.tokenId);
@@ -116,6 +119,8 @@ Hooks.on("updateCombatant", (combatant, diff, options, userID) => {
 
 // When a token is created, if it already has combatantData flag, then the token was most likely created as part of a MLT teleport
 Hooks.on("createToken", async (tokenDoc, data, options, userID) => {
+    if (game.user.id !== game.users.find(u => u.isGM && u.active).id) return;
+
     if (!game.combat) return;
 
     let combatantData = tokenDoc.data.flags["floating-combat-toolbox"]?.combatantData;
@@ -149,6 +154,8 @@ Hooks.on("preCreateCombat", (combat, data, options, userID) => {
 
 // Switch scene to combatant on turn change (if module setting enabled)
 Hooks.on("updateCombat", (combat, diff, options, userID) => {
+    if (game.user.id !== game.users.find(u => u.isGM && u.active).id) return;
+
     if (combat.data.scene) return;
     if (game.settings.get("floating-combat-toolbox", "turnChangeSceneSwitch") === "disabled") return;
     if (!game.user.isGM && game.settings.get("floating-combat-toolbox", "turnChangeSceneSwitch") === "gm") return;
